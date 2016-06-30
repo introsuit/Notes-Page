@@ -1,0 +1,96 @@
+<script type="text/javascript">
+
+        //load notes at the start of the page
+        $(document).ready(function () {
+            loadNotes();
+        });
+
+        function saveNote() {
+            var noteText = $('#noteTxtArea').val();
+            var serviceURL = 'index/saveNote';
+
+            return $.ajax({
+                type: "POST",
+                url: serviceURL,
+                cache: false,
+                async: true,
+                data: { note: noteText },
+                timeout: 1000,
+                success: successFunc,
+                error: errorFunc
+            });
+
+            function successFunc(data, status) {
+                $("#noteTxtArea").val(''); //clear the notes textarea
+                updateNoteStatusLabel("Note saved.");
+                loadNotes(); //refresh notes
+            }
+
+            function errorFunc() {
+                updateNoteStatusLabel("Failed to save the note.");
+            }
+        }
+
+        function loadNotes() {
+            var serviceURL = 'index/loadNotes';
+
+            return $.ajax({
+                type: "POST",
+                url: serviceURL,
+                cache: false,
+                async: true,
+                data: { limit: 10 }, //limit can be set from a view
+                timeout: 1000,
+                success: successFunc,
+                error: errorFunc
+            });
+
+            function successFunc(data, status) {
+                // alert(JSON.stringify(data));
+                var notesView = $('#notesDiv');
+                notesView.empty(); //clear notes
+
+                var time = 1000; //initial delay
+                //display each note with a delay and fadein
+                $.each(data, function (index, note) {
+                    setTimeout( function(){
+                        notesView.append(
+                            '<div id = "note'+index+'" class="noteContainer">'
+                            +'<div class="noteHeader">' + note.createdAt + '</div>'
+                            +'<div class="noteBody">' + note.note + '</div>'
+                        );
+                        //use id to reference the inserted note div
+                        $('#note'+index).hide().fadeIn(300);
+                    }, time);
+                    time += 50;
+                });
+            }
+
+            function errorFunc() {
+                updateNoteStatusLabel("Failed to load the notes.");
+            }
+        }
+
+        function updateNoteStatusLabel(text) {
+            var label = $("#noteStatusText");
+            label.text(text);
+            label.fadeOut(0).fadeIn(500);
+        }
+</script>
+
+<form action="<?php echo $this->url('login/process', array('action'=>'logout')); ?>">
+    <input class="btn btn-default"  type="submit" value="Logout">
+</form>
+<hr />
+Store a new note:
+</br>
+
+<div>
+    <textarea id="noteTxtArea"></textarea>
+    </br>
+    <button title="Save your current filter settings" id="saveFilterAction" class="btn btn-primary" onclick="saveNote()">Save</button>
+    <p id="noteStatusText"></p>
+</div>
+
+<div id="notesDiv"></div>
+
